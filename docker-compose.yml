@@ -1,3 +1,7 @@
+# Starlink API v2 credentials are bound to a SINGLE Starlink account, so one
+# container polls exactly one account. To collect from more than one account,
+# add a service per account, each with its own credentials file — see the
+# commented example below.
 services:
   starlink-telemetry:
     image: keithflannery/starlink-telemetry:latest
@@ -5,3 +9,14 @@ services:
     restart: always
     env_file:
       - .env  # Config here
+
+  # Second account. Copy .env, swap in that account's CLIENT_ID/CLIENT_SECRET,
+  # and set ACCOUNT_LABEL in each file so the accounts are distinguishable in
+  # Influx when they share a bucket.
+  #
+  # starlink-telemetry-acct2:
+  #   image: keithflannery/starlink-telemetry:latest
+  #   container_name: starlink-telemetry-acct2
+  #   restart: always
+  #   env_file:
+  #     - acct2.env

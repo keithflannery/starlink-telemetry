@@ -161,12 +161,15 @@ def write_telemetry_to_influx(values, column_names, write_api):
                     logging.warning(f"Invalid H3 cell ID encountered: {value}")
                 continue  # Skip writing H3CellId directly to influx
 
-            # CountryCode is a string, so it cannot go into a float field that
-            # may already exist. As a tag it lives in a separate namespace and
-            # cannot collide with historical data.
+            # CountryCode is a string, so it cannot go into a float field. It
+            # is stored as a string field rather than a tag: tags form part of
+            # the series key, so tagging would fork every user terminal away
+            # from its pre-v2 history and return two tables for any range
+            # spanning the changeover. The old collector always dropped this
+            # column, so the field name has no stored type to conflict with.
             if col_name == "CountryCode":
                 if isinstance(value, str) and value.strip():
-                    tags['country_code'] = value.strip()
+                    fields[col_name] = value.strip()
                 continue
 
             coerced = coerce_field_value(value, legacy=device_type in LEGACY_DEVICE_TYPES)

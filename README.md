@@ -127,9 +127,15 @@ v2 rate limit is 250 requests/minute per account.
 | `starlink_r` | Routers | 15s |
 | `starlink_i` | IP allocations | 5 min (immediate on IP change) |
 
-Tags are `device_id`, plus `country_code` on user terminals where reported, plus
-`account` if `ACCOUNT_LABEL` is set. `H3CellId` is converted to `latitude` /
-`longitude` fields.
+The only tag is `device_id`, plus `account` if `ACCOUNT_LABEL` is set.
+`H3CellId` is converted to `latitude` / `longitude` fields.
+
+`CountryCode` is stored as a **string field, not a tag**. Tags form part of the
+series key, so tagging it would fork every user terminal away from its pre-v2
+history and make any query spanning the changeover return two tables per
+device. As a field it leaves the series key untouched. The same reasoning is
+why `ACCOUNT_LABEL` defaults to off — see [Before setting ACCOUNT_LABEL on an
+existing deployment](#before-setting-account_label-on-an-existing-deployment).
 
 Field names come straight from the API's `columnNamesByDeviceType`. On
 `starlink_u` and `starlink_r` values are coerced to floats exactly as they
@@ -138,9 +144,10 @@ columns such as `RunningSoftwareVersion` and `DishId` continue to be dropped
 rather than changing an existing field's type. `starlink_i` is new in v2 and has
 no history to conflict with, so its string columns are stored as-is.
 
-Enum columns (`ActiveAlert`) are stored as raw numerics. The API returns a
-`metadata.enums` map for decoding these, which is deliberately not applied —
-writing labels would change the field type and Influx would reject the write.
+Enum columns (the live API sends `ActiveAlerts`) are stored as raw numerics. The
+API returns a `metadata.enums` map for decoding these, which is deliberately not
+applied — writing labels would change the field type and Influx would reject the
+write.
 
 ## Operational notes
 
